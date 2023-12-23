@@ -1,0 +1,46 @@
+import * as localForage from 'localforage';
+
+import { Injectable } from '@angular/core';
+import { createStore } from '@ngneat/elf';
+import { selectAllEntities, withEntities } from '@ngneat/elf-entities';
+import {
+    localStorageStrategy, persistState, sessionStorageStrategy
+} from '@ngneat/elf-persist-state';
+
+interface Reservation {
+	reservationId: number;
+}
+
+localForage.config({
+	driver: localForage.INDEXEDDB,
+	name: 'vQuipOS',
+	version: 1.0,
+	storeName: 'reservations',
+});
+
+const store = createStore(
+	{ name: 'reservations' },
+	withEntities<Reservation, 'reservationId'>({ idKey: 'reservationId' })
+);
+
+export const persist = persistState(store, {
+	key: 'reservations',
+	storage: localForage,
+});
+@Injectable({ providedIn: 'root' })
+export class ReservationsRepository {
+	/*
+	 **-------------------------------------------------------------------------------------
+	 ** METHOD NAME - store
+	 **-------------------------------------------------------------------------------------
+	 */
+	get store() {
+		return store;
+	}
+	/*
+	 **-------------------------------------------------------------------------------------
+	 ** METHOD NAME - select all reservations
+	 **-------------------------------------------------------------------------------------
+	 */
+	reservations$ = store.pipe(selectAllEntities());
+}
